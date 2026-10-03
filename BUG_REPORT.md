@@ -1,6 +1,6 @@
 ### BUG-01 — Expired JWTs are accepted
 
-- **Location:** `backend/app/core/security.py:49-58`, `verify_token`
+- **Location:** `backend/app/core/security.py:49-66`, `verify_token`
 - **Severity:** High
 - **Reason:** JWT decoding explicitly disables expiration verification with
   `verify_exp=False`. A stolen access or refresh token remains usable after its
@@ -10,7 +10,8 @@
 
 ### BUG-02 — Refresh tokens can authenticate as access tokens
 
-- **Location:** `backend/app/api/deps.py:14-49`, `get_current_user`
+- **Location:** `backend/app/api/deps.py:16-51`, `get_current_user`; and
+  `backend/app/api/v1/auth.py:77-99`, `refresh_token`
 - **Severity:** High
 - **Reason:** The authentication dependency verifies the signature but never
   requires `type == "access"`. A refresh token can therefore be sent as a Bearer
@@ -19,8 +20,8 @@
 
 ### BUG-03 — Cross-user todo read, update, and delete (IDOR)
 
-- **Location:** `backend/app/services/todo_service.py:42-44` and
-  `backend/app/api/v1/todos.py:88-153`
+- **Location:** `backend/app/services/todo_service.py:42-53`, `get_todo_by_id`;
+  and `backend/app/api/v1/todos.py:98-154`, todo detail handlers
 - **Severity:** Critical
 - **Reason:** Todo lookup filters only by todo ID. Any authenticated user who
   obtains another todo ID can read, modify, or delete that todo.
@@ -29,7 +30,8 @@
 
 ### BUG-04 — Redis list cache leaks data between users and pages
 
-- **Location:** `backend/app/api/v1/todos.py:37`, `list_todos`
+- **Location:** `backend/app/api/v1/todos.py:26-80`, cache-key generation and
+  `list_todos`
 - **Severity:** Critical
 - **Reason:** Every user and every pagination request uses the single cache key
   `todos:list`. A cached response for User A can be returned to User B; page 1 can
@@ -38,7 +40,7 @@
 
 ### BUG-05 — Completed todos cannot be toggled back to active
 
-- **Location:** `backend/app/api/v1/todos.py:121-124`, `update_existing_todo`
+- **Location:** `backend/app/api/v1/todos.py:115-135`, `update_existing_todo`
 - **Severity:** High
 - **Reason:** The assignment is guarded by `if todo_data.completed`, so the valid
   boolean value `false` is skipped.
@@ -47,7 +49,7 @@
 
 ### BUG-06 — Partial update erases the description
 
-- **Location:** `backend/app/api/v1/todos.py:121-130`, `update_existing_todo`
+- **Location:** `backend/app/api/v1/todos.py:115-135`, `update_existing_todo`
 - **Severity:** High
 - **Reason:** `model_dump()` includes unset optional fields as `None`. A request
   containing only `title` or `completed` therefore overwrites the existing
@@ -58,7 +60,9 @@
 
 ### BUG-07 — Todo mutations leave stale Redis list data
 
-- **Location:** `backend/app/api/v1/todos.py:77-153`, create/update/delete handlers
+- **Location:** `backend/app/core/redis.py:34-37`, `delete_pattern`; and
+  `backend/app/api/v1/todos.py:30-31,85-154`, invalidation helper and mutation
+  handlers
 - **Severity:** High
 - **Reason:** Create, update, and delete never invalidate the cached todo lists.
   Clients may receive stale data for the full five-minute TTL. This was reproduced
@@ -68,8 +72,9 @@
 
 ### BUG-08 — Frontend server-state cache survives user changes
 
-- **Location:** `frontend/src/features/auth/api/auth.ts:20-55` and
-  `frontend/src/features/auth/hooks/useAuth.ts:26-32`
+- **Location:** `frontend/src/lib/authSession.ts:3-15`;
+  `frontend/src/features/auth/api/auth.ts:21-56`; and
+  `frontend/src/lib/api.ts:27-36`
 - **Severity:** High
 - **Reason:** Logout removes tokens but does not clear React Query. A subsequent
   user in the same browser can temporarily receive the previous user's cached
