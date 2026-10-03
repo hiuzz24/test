@@ -51,16 +51,20 @@ async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
 
 
-def override_get_redis():
+@pytest.fixture(autouse=True)
+def redis_mock():
     mock_redis = MagicMock()
     mock_redis.get = AsyncMock(return_value=None)
     mock_redis.set = AsyncMock()
     mock_redis.delete = AsyncMock()
-    return mock_redis
+    mock_redis.delete_pattern = AsyncMock()
+
+    app.dependency_overrides[get_redis] = lambda: mock_redis
+    yield mock_redis
+    app.dependency_overrides.pop(get_redis, None)
 
 
 app.dependency_overrides[get_db] = override_get_db
-app.dependency_overrides[get_redis] = override_get_redis
 
 
 @pytest.fixture
