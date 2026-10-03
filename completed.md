@@ -39,6 +39,30 @@
     và file môi trường khỏi build context.
   - Chưa xác nhận lại bằng `docker compose build` trong terminal Codex vì môi
     trường này không tìm thấy Docker CLI; cần chạy lại bằng terminal có Docker.
+- Tier 2B — Playwright E2E:
+  - Đã cài `@playwright/test`, cấu hình Chromium với một worker và thêm hai
+    kịch bản trong `frontend/e2e/todos.spec.ts`.
+  - Full User Journey: đăng ký, đăng xuất, đăng nhập, tạo todo, tick hoàn thành,
+    tải lại để xác nhận trạng thái được lưu và đăng xuất.
+  - Cross-User Data Isolation: A và B dùng hai BrowserContext độc lập; B đăng
+    ký, đăng xuất rồi đăng nhập thật bằng form; sau khi API và UI danh sách tải
+    xong, xác nhận todo riêng của A không xuất hiện trong phiên B.
+  - Đã xác nhận bằng `docker compose ps`: frontend, backend, PostgreSQL và
+    Redis đều đang chạy. Frontend cổng 3000 và backend `/health` cổng 8000 trả
+    HTTP 200. Docker CLI được tìm thấy tại thư mục DockerDesktop của user;
+    giai đoạn E2E sử dụng stack đang chạy, không build lại container.
+  - Lệnh chạy từ `frontend`: `npx playwright test`.
+  - Kết quả Chromium headless thực tế: **2 passed (15.9s)**, exit code 0;
+    Full User Journey 6.6s và Cross-User Data Isolation 7.7s. Không mock API.
+  - Lần chạy đầu: hành trình người dùng pass, bài hai context lỗi cấu hình
+    trace trùng lặp; đã sửa cấu hình và chạy lại toàn bộ suite thành công.
+  - `npm run build` thành công (1.12s); `npx tsc -b` và
+    `npx eslint playwright.config.ts e2e/*.ts` đã chạy thành công.
+  - Lệnh headed đã được hướng dẫn nhưng chưa chạy: `npx playwright test --headed`.
+  - Hướng dẫn cài đặt/chạy tại `frontend/e2e/README.md`. Artifacts bị loại khỏi
+    Git và Docker context; thông tin tài khoản được sinh lúc chạy, không lưu
+    credential hoặc storage state trong repository.
+  - Dữ liệu test còn trong database phát triển; không xóa dữ liệu có sẵn.
 - Danh sách commit:
   - `docs: add assessment bug findings`
   - `fix(auth): enforce token expiration and type`
@@ -50,11 +74,11 @@
   - `docs: add assessment progress summary`
   - `docs: translate assessment progress summary`
   - `build(docker): exclude local artifacts from build context`
+  - `test(e2e): cover user journey and data isolation`
 
 ## Chưa hoàn thành
 
 - Kiểm tra thủ công trên trình duyệt sau khi sửa bằng hai tài khoản người dùng.
-- Kiểm thử E2E bằng Playwright.
 - Kế hoạch kiểm thử thủ công.
 - Đặc tả Todo Sharing.
 - Các cải tiến Docker thuộc Tier 3 ngoài phần loại trừ local build artifacts.
