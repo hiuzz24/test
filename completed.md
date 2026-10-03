@@ -31,6 +31,14 @@
     thành trong 616ms).
   - Vite đưa ra một cảnh báo không làm build thất bại: một file chunk sau khi
     rút gọn có kích thước lớn hơn 500 kB.
+- Docker build context:
+  - Đã thêm `.dockerignore` cho backend để loại `.pytest_cache`, `.venv`, Python
+    bytecode, coverage output, database test và file môi trường khỏi build
+    context.
+  - Đã thêm `.dockerignore` cho frontend để loại `node_modules`, `dist`, log npm
+    và file môi trường khỏi build context.
+  - Chưa xác nhận lại bằng `docker compose build` trong terminal Codex vì môi
+    trường này không tìm thấy Docker CLI; cần chạy lại bằng terminal có Docker.
 - Danh sách commit:
   - `docs: add assessment bug findings`
   - `fix(auth): enforce token expiration and type`
@@ -41,6 +49,7 @@
   - `test(backend): cover critical regression scenarios`
   - `docs: add assessment progress summary`
   - `docs: translate assessment progress summary`
+  - `build(docker): exclude local artifacts from build context`
 
 ## Chưa hoàn thành
 
@@ -48,7 +57,7 @@
 - Kiểm thử E2E bằng Playwright.
 - Kế hoạch kiểm thử thủ công.
 - Đặc tả Todo Sharing.
-- Cải tiến Docker.
+- Các cải tiến Docker thuộc Tier 3 ngoài phần loại trừ local build artifacts.
 - Benchmark database và bổ sung index.
 - Mô tả Pull Request và công bố việc sử dụng AI.
 - Các hạng mục tùy chọn thuộc Tier 4.
