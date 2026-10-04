@@ -68,13 +68,17 @@
   - Dữ liệu test còn trong database phát triển; không xóa dữ liệu có sẵn.
 - Tài liệu Tier 2C: đã tạo `TEST_PLAN.md` tại root theo template, đúng 12 case,
   có Preconditions, Steps, Expected/Actual, Priority, Severity và Status.
-  - Kết quả manual ngày 04/10/2026: **0 Pass / 0 Fail / 0 Blocked / 12 Not Run**.
-  - Công cụ điều khiển Windows và trình duyệt đều không khởi tạo được kernel
-    (`os error 3`) trước khi bắt đầu case. Không có thao tác manual trên ứng dụng
-    trong lượt này; không dùng pytest/Playwright làm bằng chứng thay thế.
-  - Tài liệu hoàn thành, **thực thi chưa hoàn thành và chưa kết luận kiểm thử đạt**.
-    Đã ghi hướng dẫn từng bước để người dùng tự chạy, bao gồm kiểm tra hai token
-    và hành vi cache thực tế ở TC-AUTH-07.
+  - Đã thao tác trực tiếp trên UI frontend và Swagger với hai user cùng một todo
+    riêng của A; không dùng pytest hoặc Playwright làm bằng chứng manual.
+  - Kết quả manual ngày 04/10/2026: **9 Pass / 1 Fail / 2 Blocked / 0 Not Run**.
+  - Fail: TC-AUTH-04 xác nhận user enumeration — mật khẩu sai trả 401
+    `Incorrect password`, còn email chưa tồn tại trả 404
+    `User with this email not found`; đã ghi `DEF-MANUAL-01`.
+  - Blocked: TC-AUTH-07 chưa đọc trực tiếp được localStorage/Network;
+    TC-AUTHZ-01 chưa tạo được BrowserContext/profile độc lập. Phần UI/Swagger
+    quan sát được của hai case đã được ghi, nhưng không tính là Pass.
+  - Tài liệu hoàn thành, **thực thi chưa hoàn thành và kiểm thử không đạt hoàn
+    toàn** vì còn 1 Fail và 2 Blocked.
 - Danh sách commit:
   - `docs: add assessment bug findings`
   - `fix(auth): enforce token expiration and type`
@@ -89,12 +93,14 @@
   - `test(e2e): cover user journey and data isolation`
   - `test(e2e): handle async checkbox state update`
   - `test(manual): add authentication and authorization test plan`
+  - `test(manual): record authentication test results`
 
 ## Chưa hoàn thành
 
-- Kiểm tra thủ công trên trình duyệt sau khi sửa bằng hai tài khoản người dùng.
-- Thực thi 12 case trong kế hoạch kiểm thử thủ công (đang Not Run); chưa kiểm
-  chứng kết quả Tier 2C trên ứng dụng.
+- Hoàn tất hai case manual đang Blocked: TC-AUTH-07 cần xác nhận localStorage và
+  Network; TC-AUTHZ-01 cần phiên trình duyệt độc lập.
+- Xử lý hoặc ghi nhận quyết định đối với `DEF-MANUAL-01` về user enumeration;
+  giai đoạn Tier 2C hiện không sửa application code.
 - Đặc tả Todo Sharing.
 - Các cải tiến Docker thuộc Tier 3 ngoài phần loại trừ local build artifacts.
 - Benchmark database và bổ sung index.

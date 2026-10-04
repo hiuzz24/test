@@ -7,18 +7,17 @@ bản sửa Tier 1. Tài liệu dựa trên [template](templates/TEST_PLAN_TEMPL
 [README, mục 2C](README.md#2c-manual-test-plan). Phạm vi đúng 12 case bên dưới;
 không bao gồm Tier 3, sửa application code hay mở rộng chức năng.
 
-**Tình trạng ngày 04/10/2026 (Asia/Saigon): tài liệu hoàn thành; thực thi manual
-chưa bắt đầu; chưa có kết quả kiểm thử đạt.**
+**Tình trạng ngày 04/10/2026 (Asia/Saigon): tài liệu hoàn thành; đã thực hiện
+manual trên UI và Swagger; kết quả 9 Pass / 1 Fail / 2 Blocked / 0 Not Run.**
 
-Công cụ điều khiển Windows và công cụ trình duyệt đều không khởi tạo được,
-báo `failed to write kernel assets: The system cannot find the path specified.
-(os error 3)`. Không có thao tác test nào được thực hiện trên ứng dụng trong
-lượt này. Cả 12 case giữ `Not Run`, theo yêu cầu khi không thể thao tác trực tiếp.
-Đây là hạn chế công cụ, không phải bằng chứng ứng dụng hoặc Docker bị lỗi.
+Ứng dụng thực tế được kiểm tra bằng frontend `localhost:3000` và Swagger
+`localhost:8000/docs`. Hai tài khoản test và một todo riêng của User A được tạo
+trong lượt chạy. Không sử dụng kết quả pytest hoặc Playwright để điền Actual.
 
-Không sử dụng kết quả pytest, Playwright, đọc source hoặc HTTP healthcheck để
-điền Actual Result của manual test. Các bước dưới đây để người kiểm thử tự chạy
-và ghi lại kết quả quan sát được.
+Hai case còn Blocked vì trình duyệt kiểm thử không cung cấp DevTools Network,
+không cho đọc localStorage và không hỗ trợ tạo BrowserContext/profile độc lập.
+Các phần UI và Swagger có thể quan sát vẫn được ghi lại; phần thiếu bằng chứng
+không được suy diễn từ source và không được đánh dấu Pass.
 
 ### Trạng thái và tiêu chí hoàn thành
 
@@ -57,11 +56,12 @@ Severity Critical và Priority P0.
 - Backend: `http://localhost:8000`; prefix API: `/api/v1`.
 - Swagger: `http://localhost:8000/docs`.
 - Stack Docker Compose: frontend, backend, PostgreSQL, Redis thật.
-- Trình duyệt: Brave; người chạy ghi phiên bản thực tế.
+- Trình duyệt: ghi tên và phiên bản thực tế trong nhật ký; nếu công cụ không
+  cung cấp phiên bản thì phải nêu rõ thay vì suy đoán.
 - Source tham chiếu lúc soạn: commit `35add7c`. Khi chạy, ghi commit/image đang
   kiểm thử, ngày giờ, người thực hiện và trình duyệt vào nhật ký bên dưới.
-- Môi trường của lượt manual này chưa được xác minh qua UI. Không dùng trạng
-  thái stack từ các lượt E2E trước để thay thế.
+- Môi trường đã được xác minh trực tiếp: frontend đăng ký/đăng nhập/todo hoạt
+  động; Swagger thực thi được các endpoint auth và todo trên backend thật.
 
 Khởi động từ repository root nếu cần:
 
@@ -137,18 +137,18 @@ của thao tác UI. Các preconditions phải được xác nhận ở lần ch�
 
 | TC ID | Module / Scenario | Preconditions | Test Steps | Expected Result | Actual Result | Priority | Severity | Status |
 |---|---|---|---|---|---|---|---|---|
-| TC-AUTH-01 | Đăng ký tài khoản mới | Email A chưa dùng; frontend và API sẵn sàng; Network mở. | 1. Mở `/register`.<br>2. Điền email A, mật khẩu test và Confirm Password.<br>3. Bấm Create Account.<br>4. Xem POST `/api/v1/auth/register`, chờ dashboard tải. | POST 201; vào `/`; dashboard hiển thị đúng email A. | Chưa thao tác; chưa có kết quả manual. | P0 | High | Not Run |
-| TC-AUTH-02 | Đăng ký trùng email | A đã đăng ký; dùng phiên đã logout. | 1. Mở `/register`.<br>2. Điền lại email A, mật khẩu test hợp lệ và xác nhận.<br>3. Bấm Create Account.<br>4. Đọc status/detail trong Network và lỗi UI. | HTTP 400, detail `Email already registered`; UI báo lỗi, không tạo session mới. | Chưa thao tác; chưa có kết quả manual. | P1 | Medium | Not Run |
-| TC-AUTH-03 | Logout và login đúng mật khẩu | A đang login; biết mật khẩu test; Network mở. | 1. Bấm Logout và đọc POST `/auth/logout`.<br>2. Trên `/login`, nhập đúng email/mật khẩu A và bấm Sign In.<br>3. Đọc POST `/auth/login`; chờ `/auth/me` và dashboard. | Logout 200; login 200; dashboard đúng email A. | Chưa thao tác; chưa có kết quả manual. | P0 | High | Not Run |
-| TC-AUTH-04 | Chống user enumeration khi login sai | A tồn tại; chuẩn bị email chưa đăng ký có run-id mới; hai request cùng một mật khẩu sai. | 1. Ở `/login`, gửi email A + mật khẩu sai; ghi status/detail.<br>2. Gửi email chưa tồn tại + cùng mật khẩu sai; ghi status/detail.<br>3. So sánh cả response và thông báo UI; nếu toast mất do redirect 401, đọc response trong Network. | Cả hai HTTP 401, cùng lỗi chung `Invalid email or password`; không tiết lộ email tồn tại. | Chưa thao tác; chưa có kết quả manual. Nhận xét source không thay thế Actual. | P1 | High | Not Run |
-| TC-AUTH-05 | Access token sai chữ ký | Access token A còn hạn; Swagger đã xác nhận `/auth/me` 200 với bản gốc. | 1. Tạo bản sao token tạm, giữ nguyên header/payload và hai dấu chấm.<br>2. Đổi ký tự đầu của phần chữ ký sang ký tự base64url khác (A thành B, khác A thì thành A); không chỉ đổi ký tự cuối.<br>3. Authorize bản sửa.<br>4. Execute GET `/api/v1/auth/me`; đọc Server response.<br>5. Bỏ authorization sai sau test. | HTTP 401, `Invalid authentication token`; không trả dữ liệu người dùng. | Chưa thao tác; chưa có kết quả manual. | P0 | High | Not Run |
-| TC-AUTH-06 | Refresh token dùng như access | Có refresh token A còn hạn từ đăng nhập; Swagger dùng đúng HTTPBearer. | 1. Bỏ Bearer cũ trong Swagger.<br>2. Authorize bằng refresh token.<br>3. Execute GET `/api/v1/auth/me`.<br>4. Đọc Server response và bỏ authorization sau test. | HTTP 401, `Invalid authentication token`; không trả dữ liệu người dùng. | Chưa thao tác; chưa có kết quả manual. | P0 | High | Not Run |
-| TC-AUTH-07 | Logout xóa token và dữ liệu cache UI | A đã login và có todo riêng trên UI; B tồn tại; DevTools Application/Network mở. | Thực hiện đủ quy trình chi tiết TC-AUTH-07 bên dưới: quan sát token trước/sau logout, Back/route bảo vệ, rồi login B cùng tab và kiểm tra request mới cùng dữ liệu UI. | Cả access/refresh token biến mất sau logout; route bảo vệ không hiện dữ liệu A; login B dùng dữ liệu mới và không hiển thị identity/todo A. Redirect đơn lẻ không đủ Pass. | Chưa thao tác; token cleanup và hành vi cache đều chưa kiểm chứng. | P0 | High | Not Run |
-| TC-AUTHZ-01 | B không thấy todo riêng của A trong list | A có `Private-A-<run-id>`; B đăng nhập trong phiên tách biệt; dùng đúng dataset test nhỏ. | 1. A mở list và xác nhận todo hiện.<br>2. B login trong phiên riêng, xác nhận email B.<br>3. Chờ GET `/api/v1/todos` 200 và UI hết loading.<br>4. Kiểm tra response list và UI không chứa ID/title todo A; nếu có phân trang, kiểm tra các trang liên quan. | List B tải thành công nhưng không chứa todo A. Không yêu cầu list B rỗng. | Chưa thao tác; chưa có kết quả manual. | P0 | Critical | Not Run |
-| TC-AUTHZ-02 | B GET todo A theo ID | A vừa GET todo 200; Swagger có access token B; `/auth/me` xác nhận B. | 1. B Execute GET `/api/v1/todos/{todo_id}` với `TODO_A_ID`.<br>2. Đọc status/detail, xác nhận không có nội dung todo trả về. | HTTP 404, `Todo not found`; không lộ dữ liệu todo A. | Chưa thao tác; chưa có kết quả manual. | P0 | Critical | Not Run |
-| TC-AUTHZ-03 | B không sửa được todo A | A vừa GET 200 và đã ghi baseline; access token B còn hạn, `/auth/me` xác nhận B. | 1. B Execute PUT `/api/v1/todos/{todo_id}` với ID A và body `{"title":"Unauthorized change"}`.<br>2. Ghi status/detail.<br>3. Authorize A; GET đúng todo, so với baseline title/description/completed và kiểm tra UI A. | PUT 404 `Todo not found`; GET của A vẫn 200, dữ liệu không đổi. | Chưa thao tác; chưa có kết quả manual. | P0 | Critical | Not Run |
-| TC-AUTHZ-04 | B không xóa được todo A | A vừa GET 200 xác nhận todo tồn tại; B có token hợp lệ; dùng todo test của A. | 1. Authorize B, xác nhận `/auth/me`.<br>2. Execute DELETE `/api/v1/todos/{todo_id}` với ID A.<br>3. Ghi status/detail.<br>4. Authorize A, GET lại ID và kiểm tra UI A. | DELETE 404 `Todo not found`; GET của A vẫn 200 và todo còn tồn tại. | Chưa thao tác; chưa có kết quả manual. | P0 | Critical | Not Run |
-| TC-AUTHZ-05 | Đổi A sang B trong cùng trình duyệt | A/B tồn tại; A đang login và list chứa todo A; Network mở; dùng cùng một tab. | 1. Quan sát email/todo A.<br>2. Bấm Logout, ở `/login` nhập B và Sign In.<br>3. Không F5 hoặc điều hướng bằng thanh địa chỉ giữa logout và login B.<br>4. Quan sát trong lúc chuyển phiên và sau khi `/auth/me`, `/todos` hoàn tất.<br>5. Xác nhận email B và không hiện identity/todo A. | Dữ liệu A không xuất hiện trong phiên B; list tải thành công; không cần F5. | Chưa thao tác; chưa có kết quả manual. | P0 | Critical | Not Run |
+| TC-AUTH-01 | Đăng ký tài khoản mới | Email A chưa dùng; frontend và API sẵn sàng; Network mở. | 1. Mở `/register`.<br>2. Điền email A, mật khẩu test và Confirm Password.<br>3. Bấm Create Account.<br>4. Xem POST `/api/v1/auth/register`, chờ dashboard tải. | POST 201; vào `/`; dashboard hiển thị đúng email A. | Đăng ký A trên UI thành công, tự vào `/` và hiển thị đúng email A. Một đăng ký mới riêng trên Swagger trả 201 và token response. | P0 | High | Pass |
+| TC-AUTH-02 | Đăng ký trùng email | A đã đăng ký; dùng phiên đã logout. | 1. Mở `/register`.<br>2. Điền lại email A, mật khẩu test hợp lệ và xác nhận.<br>3. Bấm Create Account.<br>4. Đọc status/detail trong Network và lỗi UI. | HTTP 400, detail `Email already registered`; UI báo lỗi, không tạo session mới. | UI hiển thị `Email already registered`; lặp request trùng email trên Swagger trả 400 cùng detail và không tạo session UI mới. | P1 | Medium | Pass |
+| TC-AUTH-03 | Logout và login đúng mật khẩu | A đang login; biết mật khẩu test; Network mở. | 1. Bấm Logout và đọc POST `/auth/logout`.<br>2. Trên `/login`, nhập đúng email/mật khẩu A và bấm Sign In.<br>3. Đọc POST `/auth/login`; chờ `/auth/me` và dashboard. | Logout 200; login 200; dashboard đúng email A. | UI logout về `/login`, login lại đúng mật khẩu và dashboard hiển thị A cùng todo cũ. Swagger xác nhận login 200 và logout 200 `Successfully logged out`. | P0 | High | Pass |
+| TC-AUTH-04 | Chống user enumeration khi login sai | A tồn tại; chuẩn bị email chưa đăng ký có run-id mới; hai request cùng một mật khẩu sai. | 1. Ở `/login`, gửi email A + mật khẩu sai; ghi status/detail.<br>2. Gửi email chưa tồn tại + cùng mật khẩu sai; ghi status/detail.<br>3. So sánh cả response và thông báo UI; nếu toast mất do redirect 401, đọc response trong Network. | Cả hai HTTP 401, cùng lỗi chung `Invalid email or password`; không tiết lộ email tồn tại. | Email A + mật khẩu sai trả 401 `Incorrect password`; email chưa tồn tại trả 404 `User with this email not found`. UI cũng hiển thị hai thông báo khác nhau. Khác Expected, có thể dò email tồn tại. | P1 | High | Fail |
+| TC-AUTH-05 | Access token sai chữ ký | Access token A còn hạn; Swagger đã xác nhận `/auth/me` 200 với bản gốc. | 1. Tạo bản sao token tạm, giữ nguyên header/payload và hai dấu chấm.<br>2. Đổi ký tự đầu của phần chữ ký sang ký tự base64url khác (A thành B, khác A thì thành A); không chỉ đổi ký tự cuối.<br>3. Authorize bản sửa.<br>4. Execute GET `/api/v1/auth/me`; đọc Server response.<br>5. Bỏ authorization sai sau test. | HTTP 401, `Invalid authentication token`; không trả dữ liệu người dùng. | Token gốc gọi `/auth/me` trả 200 đúng A; sửa ký tự đầu phần signature rồi gọi lại trả 401 `Invalid authentication token`, không có dữ liệu user. | P0 | High | Pass |
+| TC-AUTH-06 | Refresh token dùng như access | Có refresh token A còn hạn từ đăng nhập; Swagger dùng đúng HTTPBearer. | 1. Bỏ Bearer cũ trong Swagger.<br>2. Authorize bằng refresh token.<br>3. Execute GET `/api/v1/auth/me`.<br>4. Đọc Server response và bỏ authorization sau test. | HTTP 401, `Invalid authentication token`; không trả dữ liệu người dùng. | Authorize Swagger bằng refresh token A rồi gọi `/auth/me` trả 401 `Invalid authentication token`; không trả dữ liệu user. | P0 | High | Pass |
+| TC-AUTH-07 | Logout xóa token và dữ liệu cache UI | A đã login và có todo riêng trên UI; B tồn tại; DevTools Application/Network mở. | Thực hiện đủ quy trình chi tiết TC-AUTH-07 bên dưới: quan sát token trước/sau logout, Back/route bảo vệ, rồi login B cùng tab và kiểm tra request mới cùng dữ liệu UI. | Cả access/refresh token biến mất sau logout; route bảo vệ không hiện dữ liệu A; login B dùng dữ liệu mới và không hiển thị identity/todo A. Redirect đơn lẻ không đủ Pass. | Đã quan sát A + todo, logout về login, Back vẫn ở route bảo vệ, rồi A → logout → B trong cùng tab không F5; B hiện đúng email và không có todo A. Không thể đọc hai key localStorage hoặc DevTools Network nên chưa kiểm chứng trực tiếp token cleanup và request mới. | P0 | High | Blocked |
+| TC-AUTHZ-01 | B không thấy todo riêng của A trong list | A có `Private-A-<run-id>`; B đăng nhập trong phiên tách biệt; dùng đúng dataset test nhỏ. | 1. A mở list và xác nhận todo hiện.<br>2. B login trong phiên riêng, xác nhận email B.<br>3. Chờ GET `/api/v1/todos` 200 và UI hết loading.<br>4. Kiểm tra response list và UI không chứa ID/title todo A; nếu có phân trang, kiểm tra các trang liên quan. | List B tải thành công nhưng không chứa todo A. Không yêu cầu list B rỗng. | Swagger `/auth/me` xác nhận B; GET list B trả 200 và không chứa todo A; UI B cũng không hiện todo A. Công cụ không tạo được BrowserContext/profile độc lập, nên điều kiện phiên tách biệt chưa được kiểm chứng. | P0 | Critical | Blocked |
+| TC-AUTHZ-02 | B GET todo A theo ID | A vừa GET todo 200; Swagger có access token B; `/auth/me` xác nhận B. | 1. B Execute GET `/api/v1/todos/{todo_id}` với `TODO_A_ID`.<br>2. Đọc status/detail, xác nhận không có nội dung todo trả về. | HTTP 404, `Todo not found`; không lộ dữ liệu todo A. | A GET todo trả 200. Sau khi `/auth/me` xác nhận B, B GET cùng ID trả 404 `Todo not found`, không có nội dung todo A. | P0 | Critical | Pass |
+| TC-AUTHZ-03 | B không sửa được todo A | A vừa GET 200 và đã ghi baseline; access token B còn hạn, `/auth/me` xác nhận B. | 1. B Execute PUT `/api/v1/todos/{todo_id}` với ID A và body `{"title":"Unauthorized change"}`.<br>2. Ghi status/detail.<br>3. Authorize A; GET đúng todo, so với baseline title/description/completed và kiểm tra UI A. | PUT 404 `Todo not found`; GET của A vẫn 200, dữ liệu không đổi. | B PUT title vào ID A trả 404 `Todo not found`. Đổi lại A, GET trả 200; title, description và completed giữ nguyên baseline; UI A vẫn hiện todo cũ. | P0 | Critical | Pass |
+| TC-AUTHZ-04 | B không xóa được todo A | A vừa GET 200 xác nhận todo tồn tại; B có token hợp lệ; dùng todo test của A. | 1. Authorize B, xác nhận `/auth/me`.<br>2. Execute DELETE `/api/v1/todos/{todo_id}` với ID A.<br>3. Ghi status/detail.<br>4. Authorize A, GET lại ID và kiểm tra UI A. | DELETE 404 `Todo not found`; GET của A vẫn 200 và todo còn tồn tại. | `/auth/me` xác nhận B; DELETE ID A trả 404 `Todo not found`. Đổi lại A, GET cùng ID vẫn 200 và reload UI vẫn hiển thị todo A. | P0 | Critical | Pass |
+| TC-AUTHZ-05 | Đổi A sang B trong cùng trình duyệt | A/B tồn tại; A đang login và list chứa todo A; Network mở; dùng cùng một tab. | 1. Quan sát email/todo A.<br>2. Bấm Logout, ở `/login` nhập B và Sign In.<br>3. Không F5 hoặc điều hướng bằng thanh địa chỉ giữa logout và login B.<br>4. Quan sát trong lúc chuyển phiên và sau khi `/auth/me`, `/todos` hoàn tất.<br>5. Xác nhận email B và không hiện identity/todo A. | Dữ liệu A không xuất hiện trong phiên B; list tải thành công; không cần F5. | Cùng một tab: A và todo A hiển thị, logout rồi login B ngay bằng form, không F5/nhập URL. Dashboard hiện đúng B và `No todos yet`; Swagger list B trả 200 không chứa todo A. | P0 | Critical | Pass |
 
 ### Quy trình chi tiết TC-AUTH-07
 
@@ -179,19 +179,28 @@ revocation không nằm trong 12 case này.
 
 ## 4. Defect Tracking & Known Limitations — Lỗi và giới hạn
 
-Chưa có defect được xác nhận bằng manual trong lượt này.
+### DEF-MANUAL-01 — Phản hồi login tiết lộ email đã đăng ký
 
-- TC-AUTH-04: source có dấu hiệu user enumeration do status/detail khác nhau.
-  Nếu manual xác nhận khác Expected, ghi Fail và thêm **DEF-MANUAL-01** tại
-  mục này, kèm hai status/detail đã làm sạch, Priority P1, Severity High và
-  tham chiếu TC-AUTH-04. Hiện chưa gán mã đó cho một lỗi đã tái hiện.
+- **Liên kết:** TC-AUTH-04.
+- **Actual:** email tồn tại với mật khẩu sai trả 401 `Incorrect password`; email
+  chưa tồn tại trả 404 `User with this email not found`. UI hiển thị hai thông
+  báo khác nhau tương ứng.
+- **Ảnh hưởng:** kẻ tấn công có thể phân biệt email đã đăng ký để thực hiện user
+  enumeration và chuẩn bị tấn công tiếp theo.
+- **Severity:** High.
+- **Priority:** P1.
+- **Đề xuất:** dùng cùng HTTP 401 và cùng detail chung `Invalid email or password`
+  cho cả hai trường hợp; không thay đổi Expected để hợp thức hóa Actual.
+
 - [BUG_REPORT.md](BUG_REPORT.md) chưa có mục user enumeration. Không liên kết
   TC-AUTH-04 với một BUG-01…08 không tương ứng và không tự sửa application code.
 - Các liên hệ hồi quy khác: TC-AUTH-06 → BUG-02; TC-AUTH-07/TC-AUTHZ-05 → BUG-08;
   TC-AUTHZ-01 → BUG-04; TC-AUTHZ-02…04 → BUG-03. Đây là liên hệ phạm vi, không phải
   kết quả thực thi mới. Token hết hạn (BUG-01) không thuộc 12 case đã khóa.
-- Chưa xác minh UI, HTTP status, token cleanup hoặc data isolation bằng thao tác
-  manual ở lượt này. Việc source có đúng điều kiện không bảo đảm runtime Pass.
+- Chưa thể kiểm tra trực tiếp hai key localStorage và Network của frontend;
+  TC-AUTH-07 còn Blocked dù phần chuyển phiên UI đã hoạt động đúng.
+- Trình duyệt kiểm thử không cung cấp BrowserContext/profile độc lập;
+  TC-AUTHZ-01 còn Blocked dù Swagger và UI cùng cho thấy list B không có todo A.
 - Khi hoàn tất test, có thể xóa todo test bằng chính A sau khi đã ghi kết quả.
   Không xóa dữ liệu khác hay reset database; tài khoản test có thể còn lại.
 
@@ -200,44 +209,29 @@ Chưa có defect được xác nhận bằng manual trong lượt này.
 | Trường | Giá trị |
 |---|---|
 | Ngày soạn | 04/10/2026, Asia/Saigon |
-| Người thực hiện manual | Chưa có |
-| Ngày giờ thực thi | Chưa thực hiện |
-| Commit/image được kiểm thử | Chưa xác minh runtime; source tham chiếu `35add7c` |
-| Browser/version | Chưa xác minh |
-| Dữ liệu A/B và todo test | Chưa tạo trong lượt manual này |
-| Lý do chưa bắt đầu | Hai công cụ UI không khởi tạo được kernel, os error 3 |
-
-Người chạy cập nhật Actual và trạng thái trực tiếp trong ma trận sau mỗi case.
-Nếu Fail, ghi bước lỗi và điều quan sát trái Expected. Nếu Blocked, ghi bước
-đã làm, nguyên nhân dừng và phần còn thiếu. Ghi ngày giờ/browser/build của lần
-chạy; không sao chép kết quả tự động vào bảng này.
+| Người thực hiện manual | Codex, thao tác trực tiếp qua UI/Swagger |
+| Ngày giờ thực thi | 04/10/2026, khoảng 14:48–14:56 Asia/Saigon |
+| Commit/image được kiểm thử | Application code `35add7c`; local docs commit `b4d6282` không đổi runtime |
+| Browser/version | Codex In-app Browser (Chromium; phiên bản không được công cụ cung cấp) |
+| Dữ liệu A/B và todo test | Đã tạo A, B, một tài khoản đăng ký phụ và một todo riêng A; không ghi credential/token |
+| Giới hạn công cụ | Không có DevTools Network/localStorage và BrowserContext độc lập |
 
 ### Thống kê kết quả
 
 | Tổng case | Pass | Fail | Blocked | Not Run |
 |---|---|---|---|---|
-| 12 | 0 | 0 | 0 | 12 |
+| 12 | 9 | 1 | 2 | 0 |
 
 ### Phạm vi chưa kiểm chứng
 
-Lý do chung: công cụ thao tác UI/Swagger không khởi tạo được trước khi bắt đầu
-test. Vì chưa thực hiện bước nào, các case dưới đây là Not Run, không phải
-Blocked. Hướng dẫn chạy tương ứng nằm trong ma trận và mục chuẩn bị.
+Không còn case Not Run. Hai case dưới đây đã bắt đầu và đã kiểm tra được một
+phần, nhưng chưa đủ bằng chứng để kết luận Pass.
 
 | Case | Trạng thái | Phần còn phải kiểm chứng |
 |---|---|---|
-| TC-AUTH-01 | Not Run | Toàn bộ đăng ký, status 201 và dashboard đúng email. |
-| TC-AUTH-02 | Not Run | Toàn bộ đăng ký trùng, status 400 và thông báo UI. |
-| TC-AUTH-03 | Not Run | Logout/login thực tế, status và identity. |
-| TC-AUTH-04 | Not Run | Hai lần login sai và so sánh phản hồi bảo mật. |
-| TC-AUTH-05 | Not Run | Token gốc hợp lệ và từ chối token sửa chữ ký. |
-| TC-AUTH-06 | Not Run | Từ chối refresh token trên endpoint bảo vệ. |
-| TC-AUTH-07 | Not Run | Xóa hai key token, Back/route và hành vi cache không reload. |
-| TC-AUTHZ-01 | Not Run | List B tải thành công và không chứa todo A. |
-| TC-AUTHZ-02 | Not Run | GET chéo user trả 404. |
-| TC-AUTHZ-03 | Not Run | PUT chéo user trả 404 và dữ liệu A không đổi. |
-| TC-AUTHZ-04 | Not Run | DELETE chéo user trả 404 và todo A vẫn tồn tại. |
-| TC-AUTHZ-05 | Not Run | Chuyển phiên A sang B cùng tab không lộ dữ liệu A. |
+| TC-AUTH-07 | Blocked | Cần DevTools Application/Network để xác nhận hai key token biến mất và request mới `/auth/me`, `/todos`; phần route và chuyển A → B không F5 đã kiểm tra. |
+| TC-AUTHZ-01 | Blocked | Cần chạy B trong BrowserContext/profile độc lập; list B 200 và không có todo A đã kiểm tra bằng Swagger/UI cùng phiên. |
 
-**Kết luận hiện tại:** tài liệu đã hoàn thành; thực thi chưa hoàn thành;
-chưa thể kết luận kiểm thử đạt. Không tính 12 Not Run là 12 Pass.
+**Kết luận hiện tại:** tài liệu hoàn thành nhưng thực thi chưa hoàn thành vì còn
+2 Blocked. Bộ kiểm thử không đạt hoàn toàn: 9 Pass, 1 Fail xác nhận
+DEF-MANUAL-01, 2 Blocked và 0 Not Run. Blocked không được tính là Pass.
