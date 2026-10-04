@@ -65,7 +65,8 @@ future internal service changes, not changes implemented as part of this assessm
 ## 4. Database Design
 
 All new timestamps are `timestamptz NOT NULL DEFAULT now()`; update timestamps are maintained
-explicitly by application writes. Versions are `bigint NOT NULL DEFAULT 1 CHECK (version > 0)`.
+explicitly by application writes. Versions are `bigint NOT NULL DEFAULT 1 CHECK (version > 0)`
+unless a different allocation rule is specified below.
 
 ### New table: `todo_lists`
 
@@ -88,13 +89,15 @@ create the row during permission checks because that would undermine locking con
 | owner_id | uuid NOT NULL REFERENCES todo_lists(owner_id) ON DELETE CASCADE |
 | recipient_id | uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE |
 | role | varchar(6) NOT NULL CHECK (role IN ('viewer', 'editor')) |
-| version | bigint NOT NULL DEFAULT 1 CHECK (version > 0) |
+| version | bigint NOT NULL CHECK (version > 0); allocated from the next list data_version |
 | created_at / updated_at | timestamptz NOT NULL DEFAULT now() |
 
 Composite primary key `(owner_id, recipient_id)` also prevents duplicate grants.
 `CHECK (owner_id <> recipient_id)` prevents self-sharing. Add an index on
 `(recipient_id, owner_id)` for shared-list discovery; do not duplicate the primary-key index.
-Owner is implicit, never a grant role. A role change increments `version`.
+Owner is implicit, never a grant role. Creation and role changes assign the next list data_version
+to the grant version while holding the list lock. Re-granting therefore never reuses an old
+version: a delayed delete/update from a revoked grant cannot accidentally affect its replacement.
 
 ### Existing tables
 
