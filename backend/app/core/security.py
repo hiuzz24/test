@@ -46,15 +46,21 @@ def create_refresh_token(data: dict, expires_delta: timedelta | None = None) -> 
     return encoded_jwt
 
 
-def verify_token(token: str) -> dict[str, Any] | None:
-    """Verify and decode a JWT token."""
+def verify_token(
+    token: str,
+    expected_type: str | None = None,
+) -> dict[str, Any] | None:
+    """Verify a signed, non-expired JWT with an optional token type check."""
     try:
         payload = jwt.decode(
             token,
             settings.JWT_SECRET,
             algorithms=[settings.JWT_ALGORITHM],
-            options={"verify_exp": False},
         )
+
+        if expected_type is not None and payload.get("type") != expected_type:
+            return None
+
         return payload
     except JWTError:
         return None
