@@ -1,0 +1,89 @@
+# Standalone validation environment. Do not merge with docker-compose.yml.
+name: fabbi-tier3
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: tier3
+      POSTGRES_PASSWORD: ${TIER3_DB_PASSWORD:?Set TIER3_DB_PASSWORD}
+      POSTGRES_DB: tier3
+    volumes:
+      - tier3_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  redis:
+    image: redis:7
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  backend:
+    image: fabbi-tier3-backend
+    build: ./backend
+    ports:
+      - "127.0.0.1:${TIER3_API_PORT:-8300}:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tier3:${TIER3_DB_PASSWORD:?Set TIER3_DB_PASSWORD}@postgres:5432/tier3
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${TIER3_JWT_SECRET:?Set TIER3_JWT_SECRET}
+      DB_ECHO: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    image: fabbi-tier3-frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:${TIER3_API_PORT:-8300}
+    ports:
+      - "127.0.0.1:${TIER3_WEB_PORT:-3300}:3000"
+    depends_on:
+      - backend
+
+  benchmark-db:
+    profiles: [benchmark]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: tier3
+      POSTGRES_PASSWORD: ${TIER3_DB_PASSWORD:?Set TIER3_DB_PASSWORD}
+      POSTGRES_DB: tier3_benchmark
+    volumes:
+      - tier3_benchmark_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  benchmark:
+    profiles: [benchmark]
+    image: fabbi-tier3-backend
+    volumes:
+      - ./backend/scripts:/app/scripts:ro
+      - ./backend/alembic:/app/alembic:ro
+      - ./docs/benchmarks:/results
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tier3:${TIER3_DB_PASSWORD:?Set TIER3_DB_PASSWORD}@benchmark-db:5432/tier3_benchmark
+      JWT_SECRET: ${TIER3_JWT_SECRET:?Set TIER3_JWT_SECRET}
+      DB_ECHO: "false"
+    # Explicit baseline: never auto-upgrade benchmark DB to head before measurement.
+    command: ["alembic", "current"]
+    depends_on:
+      benchmark-db:
+        condition: service_healthy
+
+volumes:
+  tier3_postgres_data:
+  tier3_benchmark_data:

@@ -10,6 +10,7 @@ export function newAccount() {
 
 export function apiResponse(page: Page, method: string, path: string, status = 200) {
   return page.waitForResponse(response =>
+    (!process.env.E2E_API_URL || new URL(response.url()).origin === new URL(process.env.E2E_API_URL).origin) &&
     new URL(response.url()).pathname === `/api/v1${path}` &&
     response.request().method() === method && response.status() === status,
   );
