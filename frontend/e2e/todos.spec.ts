@@ -15,7 +15,7 @@ test('Full User Journey: register, login, create, complete, reload and logout', 
   await Promise.all([
     apiResponse(page, 'PUT', `/todos/${todo.id}`),
     apiResponse(page, 'GET', '/todos').then(response => response.finished()),
-    checkbox.check(),
+    checkbox.click(),
   ]);
   await expect(checkbox).toBeChecked();
   await Promise.all([

@@ -52,10 +52,13 @@
     HTTP 200. Docker CLI được tìm thấy tại thư mục DockerDesktop của user;
     giai đoạn E2E sử dụng stack đang chạy, không build lại container.
   - Lệnh chạy từ `frontend`: `npx playwright test`.
-  - Kết quả Chromium headless thực tế: **2 passed (15.9s)**, exit code 0;
-    Full User Journey 6.6s và Cross-User Data Isolation 7.7s. Không mock API.
+  - Kết quả Chromium headless mới nhất: **2 passed (18.0s)**, exit code 0;
+    Full User Journey 7.2s và Cross-User Data Isolation 7.4s. Không mock API.
   - Lần chạy đầu: hành trình người dùng pass, bài hai context lỗi cấu hình
     trace trùng lặp; đã sửa cấu hình và chạy lại toàn bộ suite thành công.
+  - Một lần chạy thủ công sau đó phát hiện `locator.check()` kiểm tra trạng thái
+    quá sớm với Radix checkbox cập nhật bất đồng bộ. Đã đổi sang `click()`, chờ
+    PUT và GET hoàn tất rồi mới assert; toàn bộ suite đã pass lại.
   - `npm run build` thành công (1.12s); `npx tsc -b` và
     `npx eslint playwright.config.ts e2e/*.ts` đã chạy thành công.
   - Lệnh headed đã được hướng dẫn nhưng chưa chạy: `npx playwright test --headed`.
@@ -75,6 +78,7 @@
   - `docs: translate assessment progress summary`
   - `build(docker): exclude local artifacts from build context`
   - `test(e2e): cover user journey and data isolation`
+  - `test(e2e): handle async checkbox state update`
 
 ## Chưa hoàn thành
 
