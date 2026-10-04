@@ -70,14 +70,27 @@
   có Preconditions, Steps, Expected/Actual, Priority, Severity và Status.
   - Đã thao tác trực tiếp trên UI frontend và Swagger với hai user cùng một todo
     riêng của A; không dùng pytest hoặc Playwright làm bằng chứng manual.
-  - Kết quả manual ngày 04/10/2026: **11 Pass / 1 Fail / 0 Blocked / 0 Not Run**.
+  - Kết quả trước bản sửa login: **11 Pass / 1 Fail / 0 Blocked / 0 Not Run**.
   - Fail: TC-AUTH-04 xác nhận user enumeration — mật khẩu sai trả 401
     `Incorrect password`, còn email chưa tồn tại trả 404
     `User with this email not found`; đã ghi `DEF-MANUAL-01`.
   - Người dùng bổ sung ảnh và xác nhận manual: hai key token biến mất sau logout,
     chuyển A → B không F5, list B trong cửa sổ riêng tư trả 200 và không chứa
     todo A. TC-AUTH-07 và TC-AUTHZ-01 chuyển thành Pass.
-  - **Tài liệu và thực thi hoàn thành; kiểm thử chưa đạt toàn bộ** vì còn 1 Fail.
+  - Đã sửa DEF-MANUAL-01: hai nhánh login sai cùng trả 401 và
+    `Invalid email or password`. TC-AUTH-04 retest trực tiếp trên Swagger sau
+    rebuild backend: login đúng 200, hai trường hợp sai cùng 401/body giống nhau.
+  - Kết quả tổng hợp mới nhất: **12 Pass / 0 Fail / 0 Blocked / 0 Not Run**;
+    11 case giữ kết quả trước, chỉ TC-AUTH-04 được manual retest trên image mới.
+  - TEST_PLAN.md đã được trình bày theo bốn mục của template, tách Module /
+    Feature và Test Scenario; giữ Actual Result, Priority/Severity độc lập và
+    lịch sử Fail → Fixed / Retest Passed.
+  - Kiểm tra hồi quy sau sửa: từ backend chạy
+    `.venv\Scripts\python.exe -m pytest tests/ -v`: **22 passed, 2 warnings
+    in 8.15s** (hai cảnh báo deprecation cũ).
+  - Rebuild riêng backend thành công: `docker compose up -d --build --no-deps backend`.
+  - Từ frontend chạy `npx playwright test`: **2 passed (15.7s)** trên Chromium
+    headless với stack Docker mới. Kết quả tự động tách riêng bằng chứng manual.
   - Ảnh Network còn ghi nhận request /todos trả 403 sau logout; chưa xác minh
     nguyên nhân, chưa kết luận lỗi mới.
 - Danh sách commit:
@@ -98,8 +111,6 @@
 
 ## Chưa hoàn thành
 
-- Xử lý hoặc ghi nhận quyết định đối với `DEF-MANUAL-01` về user enumeration;
-  giai đoạn Tier 2C hiện không sửa application code.
 - Đặc tả Todo Sharing.
 - Các cải tiến Docker thuộc Tier 3 ngoài phần loại trừ local build artifacts.
 - Benchmark database và bổ sung index.

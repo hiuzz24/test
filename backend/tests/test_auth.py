@@ -43,6 +43,25 @@ async def test_login_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("email", ["existing@example.com", "absent@example.com"])
+async def test_login_invalid_credentials_have_generic_response(client: AsyncClient, email):
+    """Do not reveal account existence through login status or response body."""
+    registration = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "existing@example.com", "password": "password123"},
+    )
+    assert registration.status_code == 201
+
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"email": email, "password": "wrong-password"},
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Invalid email or password"}
+
+
+@pytest.mark.asyncio
 async def test_get_current_user(client: AsyncClient):
     """Test getting current user info."""
     # Register and get token
