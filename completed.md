@@ -70,15 +70,16 @@
   có Preconditions, Steps, Expected/Actual, Priority, Severity và Status.
   - Đã thao tác trực tiếp trên UI frontend và Swagger với hai user cùng một todo
     riêng của A; không dùng pytest hoặc Playwright làm bằng chứng manual.
-  - Kết quả manual ngày 04/10/2026: **9 Pass / 1 Fail / 2 Blocked / 0 Not Run**.
+  - Kết quả manual ngày 04/10/2026: **11 Pass / 1 Fail / 0 Blocked / 0 Not Run**.
   - Fail: TC-AUTH-04 xác nhận user enumeration — mật khẩu sai trả 401
     `Incorrect password`, còn email chưa tồn tại trả 404
     `User with this email not found`; đã ghi `DEF-MANUAL-01`.
-  - Blocked: TC-AUTH-07 chưa đọc trực tiếp được localStorage/Network;
-    TC-AUTHZ-01 chưa tạo được BrowserContext/profile độc lập. Phần UI/Swagger
-    quan sát được của hai case đã được ghi, nhưng không tính là Pass.
-  - Tài liệu hoàn thành, **thực thi chưa hoàn thành và kiểm thử không đạt hoàn
-    toàn** vì còn 1 Fail và 2 Blocked.
+  - Người dùng bổ sung ảnh và xác nhận manual: hai key token biến mất sau logout,
+    chuyển A → B không F5, list B trong cửa sổ riêng tư trả 200 và không chứa
+    todo A. TC-AUTH-07 và TC-AUTHZ-01 chuyển thành Pass.
+  - **Tài liệu và thực thi hoàn thành; kiểm thử chưa đạt toàn bộ** vì còn 1 Fail.
+  - Ảnh Network còn ghi nhận request /todos trả 403 sau logout; chưa xác minh
+    nguyên nhân, chưa kết luận lỗi mới.
 - Danh sách commit:
   - `docs: add assessment bug findings`
   - `fix(auth): enforce token expiration and type`
@@ -97,8 +98,6 @@
 
 ## Chưa hoàn thành
 
-- Hoàn tất hai case manual đang Blocked: TC-AUTH-07 cần xác nhận localStorage và
-  Network; TC-AUTHZ-01 cần phiên trình duyệt độc lập.
 - Xử lý hoặc ghi nhận quyết định đối với `DEF-MANUAL-01` về user enumeration;
   giai đoạn Tier 2C hiện không sửa application code.
 - Đặc tả Todo Sharing.
