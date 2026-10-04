@@ -32,4 +32,8 @@ docs/ANSWER_KEY.md
 .DS_Store
 Thumbs.db
 
-docs/
+docs/*
+!docs/TODO_SHARING_SPEC.md
+!docs/DOCKER_VALIDATION.md
+!docs/DATABASE_PERFORMANCE.md
+!docs/benchmarks/
