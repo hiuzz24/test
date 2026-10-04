@@ -68,14 +68,18 @@ TC-AUTH-04 · **P1 / High · Fixed / Retest Passed (04/10/2026)**
 | Fix | `backend/app/api/v1/auth.py::login`: cả hai nhánh trả 401 `Invalid email or password`. |
 | Retest | Swagger trên backend rebuild: login đúng 200; hai trường hợp sai cùng 401/body, không token. Giữ Expected ban đầu. |
 
-### Known Limitations
-
 Lỗi UI bổ sung: người dùng xác nhận login sai không có toast; interceptor 401
 đã tải lại trang. Đã loại login/register khỏi luồng redirect phiên hết hạn.
 Sau rebuild frontend, manual cả hai login sai hiện toast chung, giữ form.
 
+Hồi quy logout: trước sửa có `/todos` 403; đã thêm điều kiện token và AbortSignal
+cho query todo. E2E không ghi nhận request todo thiếu Authorization trong chuyển
+trang. Ảnh Network manual người dùng gửi sau sửa chỉ có `logout` 200, không có
+request `/todos` hoặc 403 trong khoảng log được chụp (Keep log bật).
+
+### Known Limitations
+
 - Chưa chạy lại toàn bộ 12 case manual trên image mới; TC-AUTH-04 đã retest API và UI.
 - Cache được kiểm tra qua token cleanup và hành vi UI; chưa đo toàn bộ React Query cache trong RAM.
 - Chưa đánh giá chênh lệch thời gian login hoặc dò email qua register (trùng email vẫn trả 400 theo contract).
-- Ảnh người dùng từng có `/todos` 403 sau logout. Đã thêm điều kiện token cho query todo và truyền AbortSignal để hủy request khi clear cache. E2E sau sửa không ghi nhận request todo thiếu Authorization từ lúc bấm logout đến khi form login sẵn sàng; chưa quan sát lại Network bằng manual.
 - Dữ liệu test còn trong database phát triển; không reset database hoặc xóa dữ liệu có sẵn.

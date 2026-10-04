@@ -14,8 +14,9 @@
     hai token bị xóa, không có request todo thiếu Authorization trong chuyển trang.
   - Manual UI sau rebuild: mật khẩu sai và email chưa tồn tại đều hiện
     `Invalid email or password`, form giữ dữ liệu. Đã cập nhật TC-AUTH-04.
-  - Chưa manual kiểm tra lại Network sau logout; bằng chứng sửa request thừa
-    hiện là kiểm thử E2E, không tính thay thế kết quả manual.
+  - Người dùng đã bổ sung ảnh Network manual sau sửa: Keep log bật, chỉ có
+    `logout` 200; không có request `/todos` hoặc 403 trong khoảng log được chụp.
+    Bằng chứng manual này được ghi riêng với kết quả E2E.
 
 - Báo cáo lỗi: đã ghi nhận 8 lỗi quan trọng trong `BUG_REPORT.md` theo đúng cấu
   trúc Location, Severity, Reason và Fix Proposal được yêu cầu.
