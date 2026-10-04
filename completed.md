@@ -2,6 +2,21 @@
 
 ## Đã hoàn thành
 
+- Hồi quy frontend sau phản hồi manual:
+  - Login/register 401 được trả về form xử lý; endpoint cần xác thực vẫn xóa
+    phiên và redirect khi gặp 401.
+  - Query todo chỉ chạy khi có access token; dùng AbortSignal để hủy request
+    đang chạy khi clear cache, tránh request thiếu token sau logout.
+  - Rebuild frontend Docker thành công; `npm run build` pass (Vite 2.89s), còn
+    cảnh báo chunk lớn hơn 500 kB.
+  - `npx playwright test`: **4 passed (27.5s)** trên Chromium headless, API thật.
+    Thêm hai case login sai hiện toast/không reload; các bước logout xác nhận
+    hai token bị xóa, không có request todo thiếu Authorization trong chuyển trang.
+  - Manual UI sau rebuild: mật khẩu sai và email chưa tồn tại đều hiện
+    `Invalid email or password`, form giữ dữ liệu. Đã cập nhật TC-AUTH-04.
+  - Chưa manual kiểm tra lại Network sau logout; bằng chứng sửa request thừa
+    hiện là kiểm thử E2E, không tính thay thế kết quả manual.
+
 - Báo cáo lỗi: đã ghi nhận 8 lỗi quan trọng trong `BUG_REPORT.md` theo đúng cấu
   trúc Location, Severity, Reason và Fix Proposal được yêu cầu.
 - Sửa lỗi Tier 1: đã sửa toàn bộ 8 lỗi được báo cáo:
@@ -52,7 +67,7 @@
     HTTP 200. Docker CLI được tìm thấy tại thư mục DockerDesktop của user;
     giai đoạn E2E sử dụng stack đang chạy, không build lại container.
   - Lệnh chạy từ `frontend`: `npx playwright test`.
-  - Kết quả Chromium headless mới nhất: **2 passed (18.0s)**, exit code 0;
+  - Kết quả Chromium headless giai đoạn Tier 2B: **2 passed (18.0s)**, exit code 0;
     Full User Journey 7.2s và Cross-User Data Isolation 7.4s. Không mock API.
   - Lần chạy đầu: hành trình người dùng pass, bài hai context lỗi cấu hình
     trace trùng lặp; đã sửa cấu hình và chạy lại toàn bộ suite thành công.
@@ -91,8 +106,8 @@
   - Rebuild riêng backend thành công: `docker compose up -d --build --no-deps backend`.
   - Từ frontend chạy `npx playwright test`: **2 passed (15.7s)** trên Chromium
     headless với stack Docker mới. Kết quả tự động tách riêng bằng chứng manual.
-  - Ảnh Network còn ghi nhận request /todos trả 403 sau logout; chưa xác minh
-    nguyên nhân, chưa kết luận lỗi mới.
+  - Ảnh Network trước sửa ghi nhận /todos 403 sau logout; kết quả sửa và
+    kiểm chứng E2E bổ sung nằm ở mục hồi quy frontend đầu tài liệu.
 - Danh sách commit:
   - `docs: add assessment bug findings`
   - `fix(auth): enforce token expiration and type`

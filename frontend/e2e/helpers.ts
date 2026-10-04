@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page, type Request } from '@playwright/test';
 
 export function newAccount() {
   return {
@@ -49,12 +49,28 @@ export async function authenticate(
 }
 
 export async function logout(page: Page) {
-  await Promise.all([
-    apiResponse(page, 'POST', '/auth/logout'),
-    page.getByRole('button', { name: 'Logout', exact: true }).click(),
-  ]);
-  await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
+  const unauthorizedTodoRequests: string[] = [];
+  const observeRequest = (request: Request) => {
+    if (new URL(request.url()).pathname === '/api/v1/todos' &&
+        !request.headers()['authorization']) {
+      unauthorizedTodoRequests.push(request.url());
+    }
+  };
+  page.on('request', observeRequest);
+  try {
+    await Promise.all([
+      apiResponse(page, 'POST', '/auth/logout'),
+      page.getByRole('button', { name: 'Logout', exact: true }).click(),
+    ]);
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
+    expect(await page.evaluate(() => [
+      localStorage.getItem('access_token'), localStorage.getItem('refresh_token'),
+    ])).toEqual([null, null]);
+    expect(unauthorizedTodoRequests).toEqual([]);
+  } finally {
+    page.off('request', observeRequest);
+  }
 }
 
 export async function createTodo(page: Page, title: string, description: string) {

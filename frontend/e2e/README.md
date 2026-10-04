@@ -50,6 +50,12 @@ npx playwright test
    B đăng ký, đăng xuất rồi đăng nhập bằng form; sau khi API và UI danh sách tải
    xong, kiểm tra todo của A không xuất hiện trong phiên B. Không giả định danh
    sách của B phải rỗng.
+3. Login sai mật khẩu: response 401 chung, toast hiển thị, giữ email và không
+   điều hướng tải lại document.
+4. Login email chưa đăng ký: kiểm tra cùng hành vi lỗi chung như trường hợp 3.
+
+Các bước logout còn kiểm tra hai token bị xóa và không phát sinh request todo
+thiếu Authorization trong quá trình chuyển về trang login.
 
 Test dùng role/label của UI và chờ response đúng endpoint, method, status cùng
 trạng thái render. Không dùng thời gian chờ cố định. Dữ liệu tài khoản và todo
@@ -58,7 +64,7 @@ trạng thái render. Không dùng thời gian chờ cố định. Dữ liệu t
 
 ## Kết quả và artifacts
 
-Chỉ `2 passed` với exit code 0 mới xác nhận suite chạy thành công. Lệnh
+Chỉ `4 passed` với exit code 0 mới xác nhận toàn bộ suite hiện tại thành công. Lệnh
 `--list` chỉ liệt kê test, không chứng minh hành vi ứng dụng.
 
 Trace, screenshot và video được giữ khi thất bại. Kịch bản hai context lưu

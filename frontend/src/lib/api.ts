@@ -28,7 +28,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isCredentialRequest = ["/auth/login", "/auth/register"].includes(
+      error.config?.url?.split("?")[0] ?? ""
+    );
+    // Invalid credentials belong to the form, not the expired-session flow.
+    if (error.response?.status === 401 && !isCredentialRequest) {
       clearAuthSession();
       window.location.href = "/login";
     }

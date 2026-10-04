@@ -41,7 +41,7 @@ Blocked = đã bắt đầu nhưng chưa thể hoàn tất; Not Run = chưa ch�
 | TC-AUTH-01 | Đăng ký mới | Email A chưa dùng. | Điền email, password và xác nhận tại `/register`; Create Account; chờ dashboard. Kiểm tra register trên Swagger. | 201; dashboard đúng A. | UI vào `/`, đúng A; đăng ký mới riêng trên Swagger trả 201 và token. | P0 / High | Pass |
 | TC-AUTH-02 | Trùng email | A tồn tại; đã logout. | Đăng ký lại email A bằng UI và Swagger. | 400 `Email already registered`; UI báo lỗi, không tạo session mới. | UI báo đúng lỗi, không session mới; Swagger đúng 400/detail. | P1 / Medium | Pass |
 | TC-AUTH-03 | Logout/login hợp lệ | A đang login; biết mật khẩu test. | Logout → Sign In bằng A; kiểm tra dashboard và login/logout trên Swagger. | Logout/login 200; dashboard đúng A. | UI về `/login`, login lại thấy A và todo cũ; Swagger login 200, logout 200 `Successfully logged out`. | P0 / High | Pass |
-| TC-AUTH-04 | Login sai không lộ email | A tồn tại; email khác chưa đăng ký. | Gửi A + mật khẩu sai và email chưa tồn tại + cùng mật khẩu sai; so sánh status/body. | Cùng 401 `Invalid email or password`; không token. | Swagger: hai lỗi cùng 401/body, login đúng 200. UI retest: cả hai về form trống, không quan sát được toast sau reload. Pass cho phản hồi API; xem DEF-MANUAL-01. | P1 / High | Pass |
+| TC-AUTH-04 | Login sai không lộ email | A tồn tại; email khác chưa đăng ký. | Gửi A + mật khẩu sai và email chưa tồn tại + cùng mật khẩu sai; so sánh status/body và thông báo UI. | Cùng 401 `Invalid email or password`; không token; UI hiện lỗi chung. | Swagger: hai lỗi cùng 401/body, login đúng 200. Sau sửa frontend và rebuild, manual UI cả hai hiện `Invalid email or password`, form giữ dữ liệu. | P1 / High | Pass |
 | TC-AUTH-05 | JWT sai chữ ký | Access token A còn hạn; bản gốc gọi `/auth/me` 200. | Giữ header/payload; đổi ký tự đầu signature sang base64url khác. Authorize bản sửa → GET `/auth/me`; bỏ Bearer sai. | 401 `Invalid authentication token`; không dữ liệu user. | Bản gốc 200 đúng A; bản sửa 401 đúng detail, không dữ liệu user. | P0 / High | Pass |
 | TC-AUTH-06 | Refresh dùng làm access | Refresh token A còn hạn. | Thay Bearer bằng refresh token → GET `/auth/me`; bỏ Bearer sau test. | 401 `Invalid authentication token`; không dữ liệu user. | Swagger đúng 401/detail, không dữ liệu user. | P0 / High | Pass |
 | TC-AUTH-07 | Logout xóa token/cache UI | A có X; B tồn tại; DevTools Application/Network mở. | 1. Xác nhận email/X và hai key `access_token`, `refresh_token` trong Local Storage frontend.<br>2. Logout; kiểm tra key biến mất; Back/truy cập `/`.<br>3. Login A → logout → login B cùng tab, không F5/nhập URL/đóng tab; xem request mới và UI. | Hai key bị xóa; route về login, không dữ liệu A; `/auth/me`, `/todos` mới 200; đúng B, không X. | Codex thấy Back về login; người dùng xác nhận key bị xóa, chuyển phiên không F5. Ảnh: logout/login 200, `/me` và `/todos` mới 200; đúng B, không X. | P0 / High | Pass |
@@ -70,8 +70,12 @@ TC-AUTH-04 · **P1 / High · Fixed / Retest Passed (04/10/2026)**
 
 ### Known Limitations
 
-- Chưa chạy lại toàn bộ 12 case trên image mới. UI TC-AUTH-04 đã retest: cả hai login sai về form trống, không quan sát được toast sau reload. Source `frontend/src/lib/api.ts` redirect `/login` khi nhận 401; chưa kết luận toast không từng xuất hiện thoáng qua. Pass của case xác nhận status/body API, không xác nhận thông báo UI hiển thị ổn định.
+Lỗi UI bổ sung: người dùng xác nhận login sai không có toast; interceptor 401
+đã tải lại trang. Đã loại login/register khỏi luồng redirect phiên hết hạn.
+Sau rebuild frontend, manual cả hai login sai hiện toast chung, giữ form.
+
+- Chưa chạy lại toàn bộ 12 case manual trên image mới; TC-AUTH-04 đã retest API và UI.
 - Cache được kiểm tra qua token cleanup và hành vi UI; chưa đo toàn bộ React Query cache trong RAM.
 - Chưa đánh giá chênh lệch thời gian login hoặc dò email qua register (trùng email vẫn trả 400 theo contract).
-- Ảnh người dùng có `/todos` 403 ngay sau logout, chưa rõ nguyên nhân; request sau login B trả 200. Chưa kết luận lỗi mới.
+- Ảnh người dùng từng có `/todos` 403 sau logout. Đã thêm điều kiện token cho query todo và truyền AbortSignal để hủy request khi clear cache. E2E sau sửa không ghi nhận request todo thiếu Authorization từ lúc bấm logout đến khi form login sẵn sàng; chưa quan sát lại Network bằng manual.
 - Dữ liệu test còn trong database phát triển; không reset database hoặc xóa dữ liệu có sẵn.

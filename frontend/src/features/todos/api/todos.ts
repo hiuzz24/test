@@ -35,9 +35,11 @@ interface UpdateTodoRequest {
 export function useTodos(page: number = 1, size: number = 10000) {
   return useQuery({
     queryKey: ["todos"],
-    queryFn: async (): Promise<TodoListResponse> => {
+    enabled: !!localStorage.getItem("access_token"),
+    queryFn: async ({ signal }): Promise<TodoListResponse> => {
       const response = await api.get("/todos", {
         params: { page, size },
+        signal,
       });
       return response.data;
     },
