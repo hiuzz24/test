@@ -66,6 +66,15 @@
     Git và Docker context; thông tin tài khoản được sinh lúc chạy, không lưu
     credential hoặc storage state trong repository.
   - Dữ liệu test còn trong database phát triển; không xóa dữ liệu có sẵn.
+- Tài liệu Tier 2C: đã tạo `TEST_PLAN.md` tại root theo template, đúng 12 case,
+  có Preconditions, Steps, Expected/Actual, Priority, Severity và Status.
+  - Kết quả manual ngày 04/10/2026: **0 Pass / 0 Fail / 0 Blocked / 12 Not Run**.
+  - Công cụ điều khiển Windows và trình duyệt đều không khởi tạo được kernel
+    (`os error 3`) trước khi bắt đầu case. Không có thao tác manual trên ứng dụng
+    trong lượt này; không dùng pytest/Playwright làm bằng chứng thay thế.
+  - Tài liệu hoàn thành, **thực thi chưa hoàn thành và chưa kết luận kiểm thử đạt**.
+    Đã ghi hướng dẫn từng bước để người dùng tự chạy, bao gồm kiểm tra hai token
+    và hành vi cache thực tế ở TC-AUTH-07.
 - Danh sách commit:
   - `docs: add assessment bug findings`
   - `fix(auth): enforce token expiration and type`
@@ -79,11 +88,13 @@
   - `build(docker): exclude local artifacts from build context`
   - `test(e2e): cover user journey and data isolation`
   - `test(e2e): handle async checkbox state update`
+  - `test(manual): add authentication and authorization test plan`
 
 ## Chưa hoàn thành
 
 - Kiểm tra thủ công trên trình duyệt sau khi sửa bằng hai tài khoản người dùng.
-- Kế hoạch kiểm thử thủ công.
+- Thực thi 12 case trong kế hoạch kiểm thử thủ công (đang Not Run); chưa kiểm
+  chứng kết quả Tier 2C trên ứng dụng.
 - Đặc tả Todo Sharing.
 - Các cải tiến Docker thuộc Tier 3 ngoài phần loại trừ local build artifacts.
 - Benchmark database và bổ sung index.
